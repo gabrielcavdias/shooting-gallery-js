@@ -1,0 +1,14 @@
+body {
+  display: grid;
+  height: 100vh;
+  place-items: center;
+}
+
+canvas {
+  outline: 1px solid black;
+  cursor: none;
+}
+
+#assets {
+  display: none;
+}
