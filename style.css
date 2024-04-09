@@ -7,6 +7,7 @@ body {
 canvas {
   outline: 1px solid black;
   cursor: none;
+  transition: all 0.3s ease-in-out;
 }
 
 #assets {

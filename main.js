@@ -8,6 +8,8 @@ const canvas = document.getElementById("app");
 canvas.width = 800;
 canvas.height = 600;
 
+// TODO: different screen sizes to represent levels ?
+
 canvas.click();
 
 /**
@@ -35,7 +37,7 @@ const mouse = {
   y: 0,
 };
 
-const square = {
+const crosshairs = {
   x: 0,
   y: 0,
   width: 20,
@@ -46,6 +48,7 @@ const sprites = {
   crosshairs: getImg("crosshairs"),
   background: getImg("sky"),
   target: getImg("target"),
+  golden_target: getImg("golden_target"),
 };
 
 const sfx = {
@@ -60,8 +63,9 @@ const music = {
 const target = {
   x: getRandomInt(0, canvas.width - 50),
   y: getRandomInt(0, canvas.height - 50),
-  width: 50,
-  height: 50,
+  width: 60,
+  height: 60,
+  isGolden: false,
 };
 
 // Timing
@@ -84,24 +88,23 @@ function update() {
       gameState.time = 10;
       music.main.volume = 0.3;
       gameState.score = 0;
+      target.isGolden = false;
+      target.height = 60;
+      target.width = 60;
     }
   }
 
-  // Update game logic here
-  square.x = mouse.x;
-  square.y = mouse.y;
+  crosshairs.x = mouse.x;
+  crosshairs.y = mouse.y;
 }
 
 function render() {
-  // Render game graphics here
-
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(sprites.background, 0, 0, canvas.width, canvas.height);
   ctx.font = "30px Arial";
 
   if (!gameState.isRunning) {
     ctx.fillStyle = "rgba(255,255,255,0.5)";
-    // ctx.fillStyle = "red";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "black";
 
@@ -128,8 +131,11 @@ function render() {
     }
   }
   if (gameState.isRunning) {
+    const activeTarget = target.isGolden
+      ? sprites.golden_target
+      : sprites.target;
     ctx.drawImage(
-      sprites.target,
+      activeTarget,
       target.x,
       target.y,
       target.width,
@@ -144,58 +150,77 @@ function render() {
   }
   ctx.drawImage(
     sprites.crosshairs,
-    square.x,
-    square.y,
-    square.width,
-    square.height
+    crosshairs.x,
+    crosshairs.y,
+    crosshairs.width,
+    crosshairs.height
   );
 }
 
 function gameLoop() {
-  // Update game logic
   update();
 
-  // Render game graphics
   render();
 
-  // Request next frame
   requestAnimationFrame(gameLoop);
 }
 
-// Start the game loop
 gameLoop();
 
 // Events
 
 window.addEventListener("mousemove", ({ clientX, clientY }) => {
   const { offsetTop, offsetLeft } = canvas;
-  mouse.x = clientX - offsetLeft - square.width / 2;
-  mouse.y = clientY - offsetTop + square.height / 2;
+  mouse.x = clientX - offsetLeft - crosshairs.width / 2;
+  mouse.y = clientY - offsetTop + crosshairs.height / 2;
 });
 
 canvas.addEventListener("click", () => {
   if (!gameState.isRunning) {
-    sfx.shotgun.volume = 0.5;
+    sfx.shotgun.volume = 0.3;
     sfx.shotgun.play();
-    music.main.volume = 0.7;
+    music.main.volume = 0.6;
     music.main.play();
+    music.main.loop = true;
+    target.x = getRandomInt(0, canvas.width - target.width);
+    target.y = getRandomInt(0, canvas.height - target.height);
     gameState.isRunning = true;
+
     return;
   }
-  const mousePosX = mouse.x + square.width / 2;
-  const mousePosY = mouse.y + square.height / 2;
+  const mousePosX = mouse.x + crosshairs.width / 2;
+  const mousePosY = mouse.y + crosshairs.height / 2;
   const xClicked =
     mousePosX >= target.x && mousePosX <= target.x + target.width;
   const yClicked =
     mousePosY >= target.y && mousePosY <= target.y + target.height;
 
+  // Clicked on target
   if (xClicked && yClicked) {
-    const precisionY = mousePosY - target.y > 20 && mousePosY - target.y < 30;
-    const precisionX = mousePosX - target.x > 20 && mousePosX - target.x < 30;
+    const precisionY =
+      mousePosY - target.y > (target.height / 5) * 2 &&
+      mousePosY - target.y < (target.height / 5) * 3;
+    const precisionX =
+      mousePosX - target.x > (target.width / 5) * 2 &&
+      mousePosX - target.x < (target.width / 5) * 3;
 
     sfx.shot.play();
     target.x = getRandomInt(0, canvas.width - target.width);
     target.y = getRandomInt(0, canvas.height - target.height);
+
+    if (target.isGolden) {
+      gameState.time += 3;
+      target.isGolden = false;
+      target.width = 60;
+      target.height = 60;
+    }
+    if (getRandomInt(1, 11) == 7) {
+      target.isGolden = true;
+      target.width = 30;
+      target.height = 30;
+    }
+
+    // It was in the middle
     if (precisionX && precisionY) {
       gameState.score += 2;
       return;
@@ -205,5 +230,14 @@ canvas.addEventListener("click", () => {
     return;
   }
 
-  gameState.score--;
+  if (gameState.score > 0) {
+    gameState.score--;
+  }
+
+  if (target.isGolden) {
+    gameState.time -= 2;
+    target.isGolden = false;
+    target.height = 60;
+    target.width = 60;
+  }
 });
