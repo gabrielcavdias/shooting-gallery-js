@@ -1,5 +1,8 @@
 import "./style.css";
 import { getRandomInt, getImg } from "./utils";
+import shot from "./assets/sfx/shot.wav";
+import shotgun from "./assets/sfx/shotgun.wav";
+import mainMusic from "./assets/music/western.ogg";
 
 const canvas = document.getElementById("app");
 canvas.width = 800;
@@ -46,13 +49,12 @@ const sprites = {
 };
 
 const sfx = {
-  shot: new Audio("./assets/sfx/shot.wav"),
-  shotgun: new Audio("./assets/sfx/shotgun.wav"),
+  shot: new Audio(shot),
+  shotgun: new Audio(shotgun),
 };
 
 const music = {
-  main: new Audio("./assets/music/western.ogg"),
-  menu: new Audio("./assets/music/menu.ogg"),
+  main: new Audio(mainMusic),
 };
 
 const target = {
